@@ -1,14 +1,7 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import Layout from '@/components/amp/Layout';
-import { getPosts } from '@/lib/api';
-import {
-  SITE,
-  canonical,
-  amphtml,
-  ogImage,
-  sanitizeSlug,
-} from '@/lib/config';
+import { getByKategori, getPosts } from '@/lib/api';
+import { SITE, ogImage, sanitizeSlug } from '@/lib/config';
 
 interface PageProps {
   params: Promise<{
@@ -34,41 +27,14 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { kategori } = await params;
-  const category = decodeURIComponent(kategori);
-
-  return {
-    title: `${category} - ${SITE.name}`,
-    description: `Artikel kategori ${category} di ${SITE.name}.`,
-    alternates: {
-      canonical: canonical(
-        `/kategori/${encodeURIComponent(category)}`
-      ),
-      types: {
-        'application/amphtml': amphtml(
-          `/amp/kategori/${encodeURIComponent(category)}/`
-        ),
-      },
-    },
-  };
-}
-
 export default async function AmpCategoryPage({
   params,
 }: PageProps) {
   const { kategori } = await params;
+
   const category = decodeURIComponent(kategori);
 
-  const posts = await getPosts();
-
-  const categoryPosts = posts.filter(
-    (post) =>
-      post.kategori?.toLowerCase() ===
-      category.toLowerCase()
-  );
+  const posts = await getByKategori(category);
 
   const content = (
     <>
@@ -77,11 +43,9 @@ export default async function AmpCategoryPage({
           className="amp-breadcrumb"
           aria-label="Breadcrumb"
         >
-          <Link href="/amp/">
-            Beranda
-          </Link>
+          <Link href="/amp/">Beranda</Link>
 
-          <span>/</span>
+          <span>›</span>
 
           <span>{category}</span>
         </nav>
@@ -96,15 +60,15 @@ export default async function AmpCategoryPage({
       </section>
 
       <section className="amp-section">
-        {categoryPosts.length > 0 ? (
+        {posts.length > 0 ? (
           <div className="amp-grid">
-            {categoryPosts.map((post) => {
+            {posts.map((post) => {
               const slug = sanitizeSlug(post.slug);
 
               return (
                 <article
-                  className="amp-card"
                   key={post.slug}
+                  className="amp-card"
                 >
                   <Link href={`/amp/${slug}/`}>
                     <div className="amp-card-image">
@@ -118,16 +82,21 @@ export default async function AmpCategoryPage({
                     </div>
 
                     <div className="amp-card-body">
-                      <span className="amp-card-category">
-                        {post.kategori || 'ARTIKEL'}
-                      </span>
+                      {post.kategori && (
+                        <span className="amp-card-category">
+                          {post.kategori}
+                        </span>
+                      )}
 
                       <h2 className="amp-card-title">
                         {post.title}
                       </h2>
 
                       {post.created && (
-                        <div className="amp-card-meta">
+                        <time
+                          className="amp-card-meta"
+                          dateTime={post.created}
+                        >
                           {new Date(
                             post.created
                           ).toLocaleDateString('id-ID', {
@@ -135,7 +104,7 @@ export default async function AmpCategoryPage({
                             month: 'long',
                             year: 'numeric',
                           })}
-                        </div>
+                        </time>
                       )}
                     </div>
                   </Link>
@@ -145,23 +114,19 @@ export default async function AmpCategoryPage({
           </div>
         ) : (
           <div className="amp-empty">
-            <h2>
-              Belum ada artikel
-            </h2>
+            <h2>Belum ada artikel</h2>
 
             <p>
               Belum ada artikel dalam kategori{' '}
               <strong>{category}</strong>.
             </p>
 
-            <div className="amp-buttons">
-              <Link
-                href="/amp/"
-                className="amp-button amp-button-primary"
-              >
-                Kembali ke AMP
-              </Link>
-            </div>
+            <Link
+              href="/amp/"
+              className="amp-button amp-button-primary"
+            >
+              Kembali ke AMP
+            </Link>
           </div>
         )}
       </section>
