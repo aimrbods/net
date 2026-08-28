@@ -1,0 +1,9 @@
+# Cloudflare Pages deployment
+
+Build command:
+npx next build
+
+Build output directory:
+out
+
+This project uses Next.js static export (`output: "export"`).

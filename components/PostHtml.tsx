@@ -1,0 +1,3 @@
+import { stripHTML, sanitizeSlug } from '@/lib/config';
+export function withTOC(html:string){const headings:{id:string;title:string}[]=[];const content=String(html||'').replace(/<h2>(.*?)<\/h2>/gi,(m,title)=>{const clean=stripHTML(title);const id=sanitizeSlug(clean);headings.push({id,title:clean});return `<h2 id="${id}">${title}</h2>`});return {content,toc:headings.length?<details className="toc"><summary className="toc-title"><span>📑 Daftar Isi</span><span className="toc-toggle"/></summary><ul>{headings.map(h=><li key={h.id}><a href={`#${h.id}`}>{h.title}</a></li>)}</ul></details>:null};}
+export default function PostHtml({html}:{html:string}){const d=withTOC(html);return <div className="post-content">{d.toc}<div dangerouslySetInnerHTML={{__html:d.content}}/></div>}
