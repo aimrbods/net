@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import Layout from '@/components/amp/Layout';
-import { getPosts } from '@/lib/api';
+import { getPost, getPosts } from '@/lib/api';
 import {
   SITE,
-  canonical,
-  amphtml,
   ogImage,
   sanitizeSlug,
 } from '@/lib/config';
@@ -26,61 +23,12 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-
-  const posts = await getPosts();
-
-  const post = posts.find(
-    (item) => sanitizeSlug(item.slug) === slug
-  );
-
-  if (!post) {
-    return {
-      title: `Artikel Tidak Ditemukan - ${SITE.name}`,
-    };
-  }
-
-  return {
-    title: post.title,
-    description:
-      post.description || SITE.description,
-    alternates: {
-      canonical: canonical(`/${slug}`),
-      types: {
-        'application/amphtml': amphtml(
-          `/amp/${slug}/`
-        ),
-      },
-    },
-    openGraph: {
-      title: post.title,
-      description:
-        post.description || SITE.description,
-      images: [
-        {
-          url: ogImage(post.slug),
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-    },
-  };
-}
-
 export default async function AmpPostPage({
   params,
 }: PageProps) {
   const { slug } = await params;
 
-  const posts = await getPosts();
-
-  const post = posts.find(
-    (item) => sanitizeSlug(item.slug) === slug
-  );
+  const post = await getPost(slug);
 
   if (!post) {
     const content = (
@@ -92,14 +40,12 @@ export default async function AmpPostPage({
             Artikel yang Anda cari tidak tersedia.
           </p>
 
-          <div className="amp-buttons">
-            <Link
-              href="/amp/"
-              className="amp-button amp-button-primary"
-            >
-              Kembali ke AMP
-            </Link>
-          </div>
+          <Link
+            href="/amp/"
+            className="amp-button amp-button-primary"
+          >
+            Kembali ke AMP
+          </Link>
         </div>
       </section>
     );
@@ -113,27 +59,37 @@ export default async function AmpPostPage({
         className="amp-breadcrumb"
         aria-label="Breadcrumb"
       >
-        <Link href="/amp/">
-          Beranda
-        </Link>
+        <Link href="/amp/">Beranda</Link>
 
-        <span>/</span>
+        <span>›</span>
 
         {post.kategori && (
           <>
-            <span>{post.kategori}</span>
-            <span>/</span>
+            <Link
+              href={`/amp/kategori/${encodeURIComponent(
+                post.kategori
+              )}/`}
+            >
+              {post.kategori}
+            </Link>
+
+            <span>›</span>
           </>
         )}
 
         <span>{post.title}</span>
       </nav>
 
-      <header>
+      <header className="amp-article-header">
         {post.kategori && (
-          <div className="amp-card-category">
+          <Link
+            href={`/amp/kategori/${encodeURIComponent(
+              post.kategori
+            )}/`}
+            className="amp-card-category"
+          >
             {post.kategori}
-          </div>
+          </Link>
         )}
 
         <h1 className="amp-article-title">
@@ -152,6 +108,24 @@ export default async function AmpPostPage({
               })}
             </time>
           )}
+
+          {post.updated &&
+            post.updated !== post.created && (
+              <>
+                <span> · </span>
+
+                <span>
+                  Diperbarui{' '}
+                  {new Date(
+                    post.updated
+                  ).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+              </>
+            )}
         </div>
       </header>
 
@@ -172,21 +146,27 @@ export default async function AmpPostPage({
         }}
       />
 
-      <div className="amp-buttons">
-        <Link
-          href={`/${sanitizeSlug(post.slug)}`}
-          className="amp-button amp-button-primary"
-        >
-          Baca Versi Utama
-        </Link>
+      <footer className="amp-article-footer">
+        <div className="amp-buttons">
+          <Link
+            href={`/${sanitizeSlug(post.slug)}/`}
+            className="amp-button amp-button-primary"
+          >
+            Baca Versi Utama
+          </Link>
 
-        <Link
-          href="/amp/"
-          className="amp-button"
-        >
-          Artikel Lainnya
-        </Link>
-      </div>
+          <Link
+            href="/amp/"
+            className="amp-button"
+          >
+            Artikel Terbaru
+          </Link>
+        </div>
+
+        <p className="amp-powered">
+          {SITE.name}
+        </p>
+      </footer>
     </article>
   );
 
