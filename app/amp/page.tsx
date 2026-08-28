@@ -1,4 +1,3 @@
-```tsx
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getPosts } from '@/lib/api';
@@ -332,4 +331,4 @@ export default async function AmpPage() {
     </>
   );
 }
-```
+
