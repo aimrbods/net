@@ -1,66 +1,38 @@
 import Link from 'next/link';
 import Layout from '@/components/amp/Layout';
 import { getPosts } from '@/lib/api';
-import {
-  SITE,
-  ogImage,
-  sanitizeSlug,
-} from '@/lib/config';
+import { SITE, ogImage, sanitizeSlug } from '@/lib/config';
 
 export const dynamic = 'force-static';
 
 export default async function AmpPage() {
   const posts = await getPosts();
-  const latestPosts = posts.slice(0, 12);
 
   const content = (
     <>
       <section className="amp-hero">
-        <span className="amp-hero-badge">
-          ⚡ AI MODERN
-        </span>
-
         <h1>{SITE.name}</h1>
 
         <p>{SITE.description}</p>
-
-        <div className="amp-buttons">
-          <Link
-            href="/"
-            className="amp-button amp-button-primary"
-          >
-            Website Utama
-          </Link>
-
-          <Link
-            href="/amp/"
-            className="amp-button"
-          >
-            AMP
-          </Link>
-        </div>
       </section>
 
       <section className="amp-section">
-        <header className="amp-section-header">
-          <h2 className="amp-section-title">
-            Artikel Terbaru
-          </h2>
-
-          <p className="amp-section-description">
-            Artikel terbaru dari {SITE.name}
+        <div className="amp-section-header">
+          <h2>Artikel Terbaru</h2>
+          <p>
+            Temukan artikel terbaru dari {SITE.name}.
           </p>
-        </header>
+        </div>
 
-        {latestPosts.length > 0 ? (
+        {posts.length > 0 ? (
           <div className="amp-grid">
-            {latestPosts.map((post) => {
+            {posts.map((post) => {
               const slug = sanitizeSlug(post.slug);
 
               return (
                 <article
-                  className="amp-card"
                   key={post.slug}
+                  className="amp-card"
                 >
                   <Link href={`/amp/${slug}/`}>
                     <div className="amp-card-image">
@@ -74,24 +46,30 @@ export default async function AmpPage() {
                     </div>
 
                     <div className="amp-card-body">
-                      <span className="amp-card-category">
-                        {post.kategori || 'ARTIKEL'}
-                      </span>
+                      {post.kategori && (
+                        <span className="amp-card-category">
+                          {post.kategori}
+                        </span>
+                      )}
 
                       <h3 className="amp-card-title">
                         {post.title}
                       </h3>
 
-                      <div className="amp-card-meta">
-                        {new Date(post.created).toLocaleDateString(
-                          'id-ID',
-                          {
+                      {post.created && (
+                        <time
+                          className="amp-card-meta"
+                          dateTime={post.created}
+                        >
+                          {new Date(
+                            post.created
+                          ).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
-                          }
-                        )}
-                      </div>
+                          })}
+                        </time>
+                      )}
                     </div>
                   </Link>
                 </article>
@@ -100,7 +78,10 @@ export default async function AmpPage() {
           </div>
         ) : (
           <div className="amp-empty">
-            Belum ada artikel tersedia.
+            <h2>Belum ada artikel</h2>
+            <p>
+              Saat ini belum tersedia artikel untuk ditampilkan.
+            </p>
           </div>
         )}
       </section>
